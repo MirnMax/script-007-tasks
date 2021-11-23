@@ -1,4 +1,5 @@
 
 # File server project
 
-Author is Maxim Suslov.
+Author is Maxim Nazarov.
+ 
