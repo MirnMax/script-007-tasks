@@ -1,9 +1,32 @@
 import logging
 import os
 import re
-#import utils.TimeUtils as TimeUtils #не работает
 import shutil
 import time
+
+logger_ex = logging.getLogger('[Exception_logger]')
+logger_info = logging.getLogger('[Data_logger]')
+logger_ex.setLevel(logging.ERROR)
+logger_info.setLevel(logging.INFO)
+
+
+
+s_handler = logging.StreamHandler()
+ex_f_handler = logging.FileHandler('ex_file.log')
+data_f_handler = logging.FileHandler('server.log')
+
+
+common_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+s_handler.setFormatter(common_format)
+ex_f_handler.setFormatter(common_format)
+data_f_handler.setFormatter(common_format)
+
+# Add handlers to the logger_obj
+logger_ex.addHandler(s_handler)
+logger_ex.addHandler(ex_f_handler)
+
+logger_info.addHandler(s_handler)
+logger_info.addHandler(data_f_handler)
 
 
 class InvalidValueFolderError(Exception): # исключение под невалидные имена файлов
@@ -27,15 +50,17 @@ def change_dir(path: str, autocreate: bool = True) -> None:
     """
 
     if _is_unsafe_folder_name(path):
+        logger_ex.error(f'An InvalidValueFolderError exception occurred.Incorrect value of folder: {path}')
         raise InvalidValueFolderError(f'Incorrect value of folder: {path}')  # если имя(путь) некорректный - выбрасываем исключение
 
     if not os.path.exists(path): #False т.к.условие if not, но изначально os.path.exists(path) = True, если path указывает на существующий путь или дескриптор открытого файла
         if autocreate:   # по умолчанию True
             os.makedirs(path) # создаёт директорию, создавая при этом промежуточные директории.
         else:
+            logger_ex.error(f'An ElementNotExistError exception occurred.Directory {path} is not found')
             raise ElementNotExistError(f'Directory {path} is not found')
     os.chdir(path)  #смена текущей директории
-    logging.debug('change working directory to %s', path)
+    logger_info.debug(f'change working directory to {path}')
 
 
 def get_files() -> list:
@@ -68,7 +93,7 @@ def get_files() -> list:
             'edit_date':   time.ctime(os.path.getmtime(full_filename)),
             'size': str(round((os.path.getsize(full_filename)/1024),2))+' KByte',
         }) #заполняем ранее созданный список данными о каждом файле в текущем каталоге
-
+    logger_info.debug(f'returned information about files in the {path} directory ')
     return data # выводим информацию в виде списка словарей
 
 
@@ -85,6 +110,7 @@ def _filename_to_local_path(filename: str, folder_autocreate: bool = False) -> s
     """
 
     if _is_unsafe_folder_name(filename):
+        logger_ex.error(f'An InvalidValueFolderError exception occurred.Incorrect value of filename: {filename}')
         raise InvalidValueFolderError(f'Incorrect value of filename: {filename}')  # если имя(путь) некорректный - выбрасываем исключение
 
     path = os.getcwd() #текущая рабочая директория
@@ -93,7 +119,7 @@ def _filename_to_local_path(filename: str, folder_autocreate: bool = False) -> s
     folder = os.path.dirname(full_filename) #  получаем имя директории пути filename
     if folder_autocreate:
         os.makedirs(folder) # создаем папку, если получили True
-
+    logger_info.debug('full name file {filename} returned')
     return full_filename # выводим полное имя файла
 
 
@@ -115,9 +141,11 @@ def get_file_data(filename: str) -> dict:
 
     local_file = _filename_to_local_path(filename) # получение через функцию полного имени файла
     if not os.path.exists(local_file): #False т.к.условие if not, но изначально os.path.exists(path) = True, если path указывает на существующий путь или дескриптор открытого файла
+        logger_ex.error(f'An ElementNotExistError exception occurred.File {filename} does not exist')
         raise ElementNotExistError(f'File {filename} does not exist') # если файла нет - выбрасываем исключение
 
     with open(local_file, 'rb') as file_handler: # открываем файл на чтение
+        logger_info.debug(f'information about the {filename} file was returned')
         return {
             'name': filename,
             'create_date': time.ctime(os.path.getctime(local_file)),
@@ -151,7 +179,7 @@ def create_file(filename: str, content: str = None) -> dict:
         if content: # если контент был проставлен, то записываем его в новый файл, если нет то пропускаем блок  -- bool(None) == False
             data = bytes(content)
             file_handler.write(data)
-
+    logger_info.info(f'{filename} file created')
     return {
         'name': filename,
         'create_date': time.ctime(os.path.getctime(local_file)),
@@ -172,12 +200,15 @@ def delete_file(filename: str) -> None:
     local_file = _filename_to_local_path(filename) # получение через функцию полного имени файла
 
     if _is_unsafe_folder_name(filename):
+        logger_ex.error(f'An InvalidValueFolderError exception occurred.Incorrect value of filename: {filename}')
         raise InvalidValueFolderError(f'Incorrect value of filename: {filename}') # если имя(путь) некорректный - выбрасываем исключение
     if not os.path.exists(local_file): #False т.к.условие if not, но изначально os.path.exists(path) = True, если path указывает на существующий путь
+        logger_ex.error(f'An ElementNotExistError exception occurred.File {filename} does not exist')
         raise ElementNotExistError(f'File {filename} does not exist') # если такого файла нет - выбрасываем исключение
 
     if os.path.isdir(local_file): # проверка является ли путь директорией (иначе файлом)
         shutil.rmtree(local_file) #удаляет текущую директорию и все поддиректории
     else:
         os.remove(local_file) # удаляет файл
+    logger_info.info(f'{filename} file deleted')
 
