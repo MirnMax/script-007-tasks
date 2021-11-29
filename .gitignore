@@ -1,6 +1,7 @@
 # python
-__pycache__/
 *.pyc
+__pycache__/
+.pytest_cache/
 
 # virtual environment
 .venv*/
@@ -11,8 +12,7 @@ venv*/
 
 # VS Code IDE
 /.vscode/
-<<<<<<< HEAD
 *.code-workspace
-=======
-*.code-workspace
->>>>>>> trainer/02_file_service
+
+# default data folder
+/data/

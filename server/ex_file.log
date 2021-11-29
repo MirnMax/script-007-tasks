@@ -1,0 +1,4 @@
+2021-11-29 09:40:23,041 - [Exception_logger] - ERROR - An ElementNotExistError exception occurred.File exam.py does not exist
+2021-11-29 09:40:23,043 - [Exception_logger] - ERROR - An ElementNotExistError exception occurred.File exam.py does not exist
+2021-11-29 09:40:23,044 - [Exception_logger] - ERROR - An ElementNotExistError exception occurred.Directory exam.py is not found
+2021-11-29 09:42:49,385 - [Exception_logger] - ERROR - An ElementNotExistError exception occurred.File example_delete.py does not exist
